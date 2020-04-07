@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="kingim.dao.FriendTypeMapper">
+    <resultMap id="BaseResultMap" type="kingim.model.FriendType">
+        <!--
+          WARNING - @mbg.generated
+        -->
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="type_name" property="typeName" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="INTEGER"/>
+        <result column="build_time" property="buildTime" jdbcType="TIMESTAMP"/>
+        <result column="is_default" property="isDefault" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 好友列表map -->
+    <resultMap id="FriendMap" type="kingim.model.User">
+        <result column="type_name" jdbcType="VARCHAR" property="typeName"/>
+        <result column="nick_name" jdbcType="VARCHAR" property="nickName"/>
+        <result column="user_name" jdbcType="VARCHAR" property="userName"/>
+        <result column="avatar" jdbcType="VARCHAR" property="avatar"/>
+        <result column="sign" jdbcType="VARCHAR" property="sign"/>
+    </resultMap>
+
+    <resultMap id="FriendListMap" extends="BaseResultMap" type="kingim.model.FriendType">
+        <collection property="friends" javaType="list" ofType="kingim.model.Friend"
+                    resultMap="kingim.dao.FriendMapper.Friend_User_Map">
+        </collection>
+    </resultMap>
+
+    <!-- 根据userId查询好友分组列表   -->
+    <select id="getFriendTypeByUserId" resultMap="FriendListMap">
+		SELECT
+			11 as id,
+			"好友" as type_name,
+			t.id AS friend_id,
+			11 as type_id,
+			t.avatar,
+			t.sign,
+			t.nick_name
+		FROM
+		    t_user t LEFT JOIN (select * from shut_up) y on y.tuserid=#{userId}
+		WHERE
+			t.id !=if(y.shut_tuserid is null ,0,y.shut_tuserid) and t.id != #{userId} GROUP BY t.id
+	</select>
+
+    <!-- 根据分组id查询该分组下好友详细信息 -->
+    <select id="getFriendsByTypeId" resultMap="FriendMap">
+        SELECT
+			"好友" as typename,
+			t.id AS id,
+			t.avatar,
+			t.user_name as userName,
+			t.nick_name  as nickname
+		FROM
+			t_user t LEFT JOIN (select * from shut_up) y on y.tuserid=#{typeId,jdbcType=INTEGER}
+		WHERE
+			t.id !=if(y.shut_tuserid is null ,0,y.shut_tuserid) and t.id !=#{typeId,jdbcType=INTEGER} GROUP BY t.id
+	</select>
+
+</mapper>

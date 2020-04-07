@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="kingim.dao.FriendMessageMapper">
+
+    <resultMap id="BaseResultMap" type="kingim.model.FriendMessage">
+        <id column="id" property="id" jdbcType="INTEGER" />
+        <result column="from_user_id" property="fromUserId" jdbcType="INTEGER" />
+        <result column="to_user_id" property="toUserId" jdbcType="INTEGER" />
+        <result column="content" property="content" jdbcType="VARCHAR" />
+        <result column="send_time" property="sendTime" jdbcType="TIMESTAMP" />
+        <result column="is_read" property="isRead" jdbcType="INTEGER" />
+    </resultMap>
+
+    <!-- 好友消息 -->
+    <resultMap id="friendMsgMap" extends="BaseResultMap" type="kingim.model.FriendMessage">
+        <result column="from_avatar" property="fromAvatar" jdbcType="VARCHAR" />
+        <result column="from_name" property="fromName" jdbcType="VARCHAR" />
+        <result column="to_avatar" property="toAvatar" jdbcType="VARCHAR" />
+        <result column="to_name" property="toName" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <!-- 聊天记录 -->
+    <select id="getHistoryMessage" resultMap="friendMsgMap">
+        select
+               friend_message.*,
+               a.avatar from_avatar,
+               a.nick_name from_name,
+               b.avatar to_avatar,
+               b.nick_name to_name
+        from friend_message,t_user a,t_user b where
+            friend_message.from_user_id=a.ID and friend_message.to_user_id=b.ID and
+        ( (friend_message.from_user_id=#{fromUserId,jdbcType=INTEGER }  and friend_message.to_user_id= #{toUserId,jdbcType=INTEGER} )
+        or (friend_message.from_user_id =  #{toUserId,jdbcType=INTEGER} and friend_message.to_user_id =#{fromUserId,jdbcType=INTEGER } ) )
+        ORDER BY send_time desc
+	</select>
+
+    <!-- 将用户未读的消息全部设置为已读 -->
+    <update id="updateAllToRead">
+	      update friend_message set is_read = 1 where (from_user_id = #{fromUserId,jdbcType=INTEGER }
+	      and to_user_id = #{toUserId,jdbcType=INTEGER})
+	</update>
+
+</mapper>
